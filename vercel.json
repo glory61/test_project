@@ -1,11 +1,5 @@
 {
   "rewrites": [
     { "source": "/table", "destination": "/table.html" }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.js"
-    }
   ]
 }
