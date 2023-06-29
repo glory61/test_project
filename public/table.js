@@ -12,25 +12,36 @@ router.get('/table', async (req, res) => {
         const doctors = await Doctor.find();
         const appointments = await Appointment.find();
         const techniqueTable = generateTechniqueTable(appointments, patients, doctors);
-        const appointmentTable = await generateAppointmentTable(appointments);
+        const appointmentTable = generateAppointmentTable(appointments);
         const html = `
-      <html>
-        <head>
-          <link rel="stylesheet" type="text/css" href="/styles_table.css">
-        </head>
-        <body>
-          <h2>Technique Table</h2>
-          <table>
-            ${techniqueTable}
-          </table>
-          <h2>Appointment Table</h2>
-          <table>
-            ${appointmentTable}
-          </table>
-          <script src="/client.js"></script>
-        </body>
-      </html>
-    `;
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/styles_table.css">.
+</head>
+<body>
+  <h2>Technique Table</h2>
+  <table>
+    ${techniqueTable}
+  </table>
+  <h2>Appointment Table</h2>
+  <table>
+    ${await appointmentTable}
+  </table>
+  <script>
+    const socket = new WebSocket('ws://localhost:3000/');
+    socket.onmessage = function (event) {
+      if (event.data === 'reload') {
+        location.reload(); // Reload the page
+      }
+    };
+    // Save Data function for front-end
+    function saveData() {
+      socket.send('saveData');
+    }
+  </script>
+</body>
+</html>
+   `;
         res.send(html);
     } catch (error) {
         console.error('Error retrieving data:', error);

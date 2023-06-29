@@ -37,10 +37,104 @@ wss.on('connection', (ws) => {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
-const router=require ('./table.js')
-app.use('/', router);
-app.use('/table', require('./table.js'));
+// Serve the HTML page with the forms
+app.get('/', (req, res) => {
+    res.send(`
+    <html>
+<head>
+<link rel="stylesheet" type="text/css" href="/styles.css">.
+</head>
+<body>
+  <div class="form-container">
+    <h3>Patients</h3>
+    <textarea name="patients" placeholder="Enter patients data"></textarea>
 
+    <h3>Doctors</h3>
+    <textarea name="doctors" placeholder="Enter doctors data"></textarea>
+
+    <h3>Appointments</h3>
+    <textarea name="appointments" placeholder="Enter appointments data"></textarea>
+
+    <div class="button-group">
+      <button type="submit" onclick="submitForm()">Submit Data</button>
+      <form action="/cleardb" method="POST">
+        <button type="submit" onclick="clearDB(event)">Clear</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="modal">
+      <p id="modalMessage"></p>
+    </div>
+  </div>
+
+  <script>
+    function submitForm() {
+      const patientsData = document.querySelector('textarea[name="patients"]').value;
+      const doctorsData = document.querySelector('textarea[name="doctors"]').value;
+      const appointmentsData = document.querySelector('textarea[name="appointments"]').value;
+
+      // Send the form data to the server using fetch
+      fetch('/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          patients: patientsData,
+          doctors: doctorsData,
+          appointments: appointmentsData
+        })
+      })
+        .then(response => response.text())
+        .then(message => {
+          // Display the modal overlay
+          document.getElementById('modalMessage').innerHTML = message;
+          document.getElementById('overlay').classList.add('active');
+          connectedClients.forEach((client) => {
+            client.send('reload');
+          });
+        })
+        .catch(error => {
+          console.error('Error submitting form:', error);
+        });
+    }
+    function closeModal() {
+      // Close the modal overlay and clear the form
+      document.getElementById('overlay').classList.remove('active');
+      document.querySelector('textarea[name="patients"]').value = '';
+      document.querySelector('textarea[name="doctors"]').value = '';
+      document.querySelector('textarea[name="appointments"]').value = '';
+    }
+    function clearDB() {
+  // Send a request to the server to clear the database
+   event.preventDefault();
+  fetch('/cleardb', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(response => response.text())
+    .then(message => {
+      // Display the modal overlay
+      document.getElementById('modalMessage').innerHTML = message;
+      document.getElementById('overlay').classList.add('active');
+      connectedClients.forEach((client) => {
+        client.send('reload');
+      });
+    })
+    .catch(error => {
+      console.error('Error clearing database:', error);
+    });
+}
+
+  </script>
+</body>
+</html>
+  `);
+});
 
 
 // Endpoint for submitting all data
@@ -229,7 +323,8 @@ app.post('/cleardb', async (req, res) => {
 });
 
 
-
+// Mount table router
+app.use('/api', tableRouter);
 function generateMessage(category, entries) {
     if (entries.length > 0) {
         let message = `<b>${category}:</b><br>`;

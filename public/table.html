@@ -13,7 +13,8 @@
     ${await appointmentTable}
 </table>
 <script>
-    const socket = new WebSocket(`ws://${location.host}`);
+    <script src="https://unpkg.com/websocket"></script>
+const socket = new WebSocket(`wss://${location.hostname}:${location.port}`);
     socket.onmessage = function (event) {
         if (event.data === 'reload') {
             location.reload(); // Reload the page
@@ -25,4 +26,5 @@
     }
 </script>
 </body>
+
 </html>
