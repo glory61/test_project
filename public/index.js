@@ -37,6 +37,8 @@ wss.on('connection', (ws) => {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
+const router=require ('./table.js')
+app.use('/', router);
 app.use('/table', require('./table.js'));
 
 
