@@ -39,7 +39,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 const router=require ('./table.js')
 app.use('/', router);
-
+router.use('/table', require('./table.js'));
 
 
 
