@@ -239,9 +239,10 @@ function generateMessage(category, entries) {
 
 
 // Start the server
-const server = app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+const server = app.listen(process.env.PORT || 3000, () => {
+    console.log('Server is running');
 });
+
 server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
