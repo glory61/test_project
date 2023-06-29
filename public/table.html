@@ -1,6 +1,7 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="/styles_table.css">.
+    <link rel="stylesheet" type="text/css" href="/styles_table.css">
 </head>
 <body>
 <h2>Technique Table</h2>
@@ -12,7 +13,7 @@
     ${await appointmentTable}
 </table>
 <script>
-    const socket = new WebSocket('ws://localhost:3000/');
+    const socket = new WebSocket(`ws://${location.host}`);
     socket.onmessage = function (event) {
         if (event.data === 'reload') {
             location.reload(); // Reload the page

@@ -230,8 +230,7 @@ app.post('/cleardb', async (req, res) => {
 });
 
 
-// Mount table router
-app.use('/api', tableRouter);
+
 function generateMessage(category, entries) {
     if (entries.length > 0) {
         let message = `<b>${category}:</b><br>`;
