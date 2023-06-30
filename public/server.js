@@ -6,6 +6,7 @@ const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
 const WebSocket = require('ws');
 
+
 // MongoDB connection setup
 mongoose.connect('mongodb+srv://admin:123456admin@cluster0.bkoa8.mongodb.net/my?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
 const db = mongoose.connection;
@@ -30,110 +31,14 @@ wss.on('connection', (ws) => {
     });
 });
 
+
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
-
 // Serve the HTML page with the forms
-app.get('/', (req, res) => {
-    res.send(`
-    <html>
-<head>
-<link rel="stylesheet" type="text/css" href="/styles.css">
-</head>
-<body>
-  <div class="form-container">
-    <h3>Patients</h3>
-    <textarea name="patients" placeholder="Enter patients data"></textarea>
 
-    <h3>Doctors</h3>
-    <textarea name="doctors" placeholder="Enter doctors data"></textarea>
-
-    <h3>Appointments</h3>
-    <textarea name="appointments" placeholder="Enter appointments data"></textarea>
-
-    <div class="button-group">
-      <button type="submit" onclick="submitForm()">Submit Data</button>
-      <form action="/cleardb" method="POST">
-        <button type="submit" onclick="clearDB(event)">Clear</button>
-      </form>
-    </div>
-  </div>
-
-  <div id="overlay" class="overlay">
-    <div class="modal">
-      <p id="modalMessage"></p>
-    </div>
-  </div>
-
-  <script>
-    function submitForm() {
-      const patientsData = document.querySelector('textarea[name="patients"]').value;
-      const doctorsData = document.querySelector('textarea[name="doctors"]').value;
-      const appointmentsData = document.querySelector('textarea[name="appointments"]').value;
-
-      // Send the form data to the server using fetch
-      fetch('/data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          patients: patientsData,
-          doctors: doctorsData,
-          appointments: appointmentsData
-        })
-      })
-        .then(response => response.text())
-        .then(message => {
-          // Display the modal overlay
-          document.getElementById('modalMessage').innerHTML = message;
-          document.getElementById('overlay').classList.add('active');
-          connectedClients.forEach((client) => {
-            client.send('reload');
-          });
-        })
-        .catch(error => {
-          console.error('Error submitting form:', error);
-        });
-    }
-    
-    function closeModal() {
-      // Close the modal overlay and clear the form
-      document.getElementById('overlay').classList.remove('active');
-      document.querySelector('textarea[name="patients"]').value = '';
-      document.querySelector('textarea[name="doctors"]').value = '';
-      document.querySelector('textarea[name="appointments"]').value = '';
-    }
-    
-    function clearDB() {
-      // Send a request to the server to clear the database
-      event.preventDefault();
-      fetch('/cleardb', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-        .then(response => response.text())
-        .then(message => {
-          // Display the modal overlay
-          document.getElementById('modalMessage').innerHTML = message;
-          document.getElementById('overlay').classList.add('active');
-          connectedClients.forEach((client) => {
-            client.send('reload');
-          });
-        })
-        .catch(error => {
-          console.error('Error clearing database:', error);
-        });
-    }
-  </script>
-</body>
-</html>
-  `);
-});
 
 // Endpoint for submitting all data
 app.post('/data', async (req, res) => {
@@ -253,6 +158,8 @@ app.post('/data', async (req, res) => {
         }
     }
 
+
+
     let message = '';
     if (successfulPatients.length > 0) {
         message += `<b>Successful Patients:</b><br>${successfulPatients.join('<br>')}`;
@@ -282,19 +189,19 @@ app.post('/data', async (req, res) => {
         message += '<br><br>';
     }
 
+
+
+
     res.setHeader('Content-Type', 'text/html'); // Set the content type to HTML
-    res.send(`
-      <html>
+    res.send(`<html>
         <h3><b>Data Submitted</b></h3>
         <p>${message}</p>
-        <button onclick="closeModal()">Close</button>
-      </html>
-    `);
-
-    connectedClients.forEach((client) => {
+       <button onclick="closeModal()">Close</button>
+         </html> `);connectedClients.forEach((client) => {
         client.send('reload');
     });
 });
+
 
 // Endpoint for clearing the database
 app.post('/cleardb', async (req, res) => {
@@ -303,15 +210,12 @@ app.post('/cleardb', async (req, res) => {
         const doctorsDeleteCount = await Doctor.deleteMany();
         const appointmentsDeleteCount = await Appointment.deleteMany();
 
-        res.send(`
-          <html>
-            Patients deleted: ${patientsDeleteCount.deletedCount}<br>
-            Doctors deleted: ${doctorsDeleteCount.deletedCount}<br>
-            Appointments deleted: ${appointmentsDeleteCount.deletedCount}<br><br>
-            <button onclick="closeModal()">Close</button>
-          </html>
-        `);
-
+        res.send(`<html>
+      Patients deleted: ${patientsDeleteCount.deletedCount}<br>
+      Doctors deleted: ${doctorsDeleteCount.deletedCount}<br>
+      Appointments deleted: ${appointmentsDeleteCount.deletedCount}<br><br>
+       <button onclick="closeModal()">Close</button>
+        </html> `);
         connectedClients.forEach((client) => {
             client.send('reload');
         });
@@ -321,9 +225,8 @@ app.post('/cleardb', async (req, res) => {
     }
 });
 
-// Mount table router
-app.use(tableRouter);
 
+// Mount table router
 function generateMessage(category, entries) {
     if (entries.length > 0) {
         let message = `<b>${category}:</b><br>`;
@@ -331,20 +234,21 @@ function generateMessage(category, entries) {
         message += '<br><br>';
         return message;
     }
-    return '';
+    return ''
 }
 
-// Start the server
-const port = process.env.PORT || 3000;
-const server = app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
 
+// Start the server
+const server = app.listen(3000, () => {
+    console.log('Server is running on port 3000');
+});
 server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
     });
 });
+
+
 
 // Export models
 module.exports = {
@@ -352,3 +256,4 @@ module.exports = {
     Doctor,
     Appointment
 };
+
