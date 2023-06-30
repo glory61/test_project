@@ -41,92 +41,105 @@ app.get('/', (req, res) => {
     <html>
     <head>
       <style>
-        body {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          font-family: Arial, sans-serif;
-          background-color: #f5f5f5;
-        }
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+}
+.form-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.form-container h3 {
+    margin-bottom: 10px;
+}
+.form-container textarea {
+    width: 100%;
+    height: 100px;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    resize: vertical;
+}
 
-        .form-container {
-          background-color: #fff;
-          padding: 20px;
-          border-radius: 5px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
+.form-container .button-group {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center; /* Add this line */
+}
 
-        .form-container h3 {
-          margin-bottom: 10px;
-        }
+.form-container .button-group button {
+    margin-bottom: 10px;
+    margin-left: 10px;
+    margin-right: 15px;
+}
+.form-container .button-group button:last-child {
+    align-self: flex-end;
+}
 
-        .form-container textarea {
-          width: 100%;
-          height: 100px;
-          padding: 5px;
-          margin-bottom: 10px;
-          border: 1px solid #ccc;
-          resize: vertical;
-        }
+.form-container button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
-        .form-container button {
-          padding: 10px 20px;
-          background-color: #4CAF50;
-          color: #fff;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        }
+/* Overlay styles */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.3s;
+}
 
-        /* Overlay styles */
-        .overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999;
-          visibility: hidden;
-          opacity: 0;
-          transition: visibility 0s, opacity 0.3s;
-        }
+.overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
 
-        .overlay.active {
-          visibility: visible;
-          opacity: 1;
-        }
+.modal {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    text-align: center;
+}
 
-        .modal {
-          background-color: #fff;
-          padding: 20px;
-          border-radius: 5px;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-          max-width: 400px;
-          text-align: center;
-        }
+.modal h3 {
+    margin-bottom: 10px;
+}
 
-        .modal h3 {
-          margin-bottom: 10px;
-        }
+.modal p {
+    margin-bottom: 20px;
+}
 
-        .modal p {
-          margin-bottom: 20px;
-        }
+.modal button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
-        .modal button {
-          padding: 10px 20px;
-          background-color: #4CAF50;
-          color: #fff;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        }
       </style>
     </head>
     <body>
@@ -148,7 +161,7 @@ app.get('/', (req, res) => {
 
       <div id="overlay" class="overlay">
         <div class="modal">
-          <h3>Data Submitted Successfully</h3>
+          <h3>Data Submitted</h3>
           <p id="modalMessage"></p>
           <button onclick="closeModal()">Close</button>
         </div>
@@ -183,13 +196,6 @@ app.get('/', (req, res) => {
           });
         }
 
-        function closeModal() {
-          // Close the modal overlay and clear the form
-          document.getElementById('overlay').classList.remove('active');
-          document.querySelector('textarea[name="patients"]').value = '';
-          document.querySelector('textarea[name="doctors"]').value = '';
-          document.querySelector('textarea[name="appointments"]').value = '';
-        }
         
         function clearDB() {
         // Send a request to the server to clear the database
@@ -213,6 +219,13 @@ app.get('/', (req, res) => {
                 console.error('Error clearing database:', error);
             });
     }
+     function closeModal() {
+          // Close the modal overlay and clear the form
+          document.getElementById('overlay').classList.remove('active');
+          document.querySelector('textarea[name="patients"]').value = '';
+          document.querySelector('textarea[name="doctors"]').value = '';
+          document.querySelector('textarea[name="appointments"]').value = '';
+        }
       </script>
     </body>
     </html>
@@ -372,7 +385,7 @@ app.post('/data', async (req, res) => {
 
 
 
-    res.setHeader('Content-Type', 'text/html'); // Set the content type to HTML
+  // Set the content type to HTML
     res.send(`<html>
         <h3><b>Data Submitted</b></h3>
         <p>${message}</p>
