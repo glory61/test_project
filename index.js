@@ -377,13 +377,13 @@ app.post('/data', async (req, res) => {
         message += `<b><br><br>Duplicate Appointments:</b><br>${duplicateAppointments.join('<br>')}`;
     }
     if (failedFormatPatients.length > 0) {
-        message += `<b><br><br>Failed format patients:</b><br>${failedFormatPatients.join('<br>')}`;
+        message += `<b><br><br>Wrong format patients:</b><br>${failedFormatPatients.join('<br>')}`;
     }
     if (failedFormatDoctors.length > 0) {
-        message += `<b><br><br>Failed format patients:</b><br>${failedFormatDoctors.join('<br>')}`;
+        message += `<b><br><br>Wrong format patients:</b><br>${failedFormatDoctors.join('<br>')}`;
     }
     if (failedFormatAppointments.length > 0) {
-        message += `<b><br><br>Failed format appointments:</b><br>${failedFormatAppointments.join('<br>')}`;
+        message += `<b><br><br>Wrong format appointments:</b><br>${failedFormatAppointments.join('<br>')}`;
     }
     if (message !== '') {
         message += '<br><br>';
