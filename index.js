@@ -5,7 +5,7 @@ const tableRouter = require('./table');
 const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
 const WebSocket = require('ws');
-
+const port = 10000;
 
 // MongoDB connection setup
 mongoose.connect('mongodb+srv://admin:123456admin@cluster0.bkoa8.mongodb.net/my?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
@@ -431,7 +431,7 @@ app.use (tableRouter);
 
 // Start the server
 const server = app.listen(port, () => {
-    console.log(`Server started at http://test-task-lzlh.onrender.com`);
+    console.log(`Server started at http://test-task-lzlh.onrender.com:${port}`);
 });
 server.on('upgrade', handleUpgrade);
 function handleUpgrade(request, socket, head) {
