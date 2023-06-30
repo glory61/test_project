@@ -5,7 +5,7 @@ const tableRouter = require('./table');
 const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
 const WebSocket = require('ws');
-const port = process.env.PORT || 8080;
+const port = 10000;
 
 // MongoDB connection setup
 mongoose.connect('mongodb+srv://admin:123456admin@cluster0.bkoa8.mongodb.net/my?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
