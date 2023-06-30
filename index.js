@@ -36,8 +36,161 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 // Serve the HTML page with the forms
-app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname, '/index.html'));
+app.get('/', (req, res) => {
+    res.send(`
+    <html>
+    <head>
+      <style>
+        body {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          font-family: Arial, sans-serif;
+          background-color: #f5f5f5;
+        }
+
+        .form-container {
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 5px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container h3 {
+          margin-bottom: 10px;
+        }
+
+        .form-container textarea {
+          width: 100%;
+          height: 100px;
+          padding: 5px;
+          margin-bottom: 10px;
+          border: 1px solid #ccc;
+          resize: vertical;
+        }
+
+        .form-container button {
+          padding: 10px 20px;
+          background-color: #4CAF50;
+          color: #fff;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        /* Overlay styles */
+        .overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 999;
+          visibility: hidden;
+          opacity: 0;
+          transition: visibility 0s, opacity 0.3s;
+        }
+
+        .overlay.active {
+          visibility: visible;
+          opacity: 1;
+        }
+
+        .modal {
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 5px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          max-width: 400px;
+          text-align: center;
+        }
+
+        .modal h3 {
+          margin-bottom: 10px;
+        }
+
+        .modal p {
+          margin-bottom: 20px;
+        }
+
+        .modal button {
+          padding: 10px 20px;
+          background-color: #4CAF50;
+          color: #fff;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="form-container">
+        <h3>Patients</h3>
+        <textarea name="patients" placeholder="Enter patients data"></textarea>
+        
+        <h3>Doctors</h3>
+        <textarea name="doctors" placeholder="Enter doctors data"></textarea>
+        
+        <h3>Appointments</h3>
+        <textarea name="appointments" placeholder="Enter appointments data"></textarea>
+        
+        <button type="submit" onclick="submitForm()">Submit Data</button>
+      </div>
+
+      <div id="overlay" class="overlay">
+        <div class="modal">
+          <h3>Data Submitted Successfully</h3>
+          <p id="modalMessage"></p>
+          <button onclick="closeModal()">Close</button>
+        </div>
+      </div>
+
+      <script>
+        function submitForm() {
+          const patientsData = document.querySelector('textarea[name="patients"]').value;
+          const doctorsData = document.querySelector('textarea[name="doctors"]').value;
+          const appointmentsData = document.querySelector('textarea[name="appointments"]').value;
+
+          // Send the form data to the server using fetch
+          fetch('/data', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              patients: patientsData,
+              doctors: doctorsData,
+              appointments: appointmentsData
+            })
+          })
+          .then(response => response.text())
+          .then(message => {
+            // Display the modal overlay
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('overlay').classList.add('active');
+          })
+          .catch(error => {
+            console.error('Error submitting form:', error);
+          });
+        }
+
+        function closeModal() {
+          // Close the modal overlay and clear the form
+          document.getElementById('overlay').classList.remove('active');
+          document.querySelector('textarea[name="patients"]').value = '';
+          document.querySelector('textarea[name="doctors"]').value = '';
+          document.querySelector('textarea[name="appointments"]').value = '';
+        }
+      </script>
+    </body>
+    </html>
+  `);
 });
 
 
