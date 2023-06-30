@@ -12,15 +12,24 @@ h2 {
     margin-bottom: 10px;
 }
 
+.tables-container {
+    display: flex;
+    justify-content: center;
+    max-width: 1000px;
+}
+
+.table-wrapper {
+    flex: 1;
+    margin: 100px;
+    width: 50%;
+}
+
 table {
     border-collapse: collapse;
-    width: 100%;
-    max-width: 800px;
-    margin-bottom: 20px;
+    width: 150%;
 }
 
 table td, table th {
-    border: 1px solid #ddd;
     padding: 8px;
 }
 
@@ -29,9 +38,17 @@ table tr:nth-child(even) {
 }
 
 table th {
-    padding-top: 12px;
-    padding-bottom: 12px;
     text-align: left;
     background-color: #4CAF50;
     color: white;
+}
+
+.technique-table {
+    background-color: #ffffff;
+    width: 50%;
+}
+
+.appointment-table {
+    background-color: #ffffff;
+    width: 50%; /* Updated width to match the technique table */
 }

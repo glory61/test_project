@@ -5,6 +5,7 @@ const { Patient, Doctor, Appointment } = require('./model.js');
 const router = express.Router();
 expressWs(router);
 
+
 router.get('/table', async (req, res) => {
     try {
         const patients = await Patient.find();
@@ -18,16 +19,22 @@ router.get('/table', async (req, res) => {
   <link rel="stylesheet" type="text/css" href="/styles_table.css">
 </head>
 <body>
-  <h2>Technique Table</h2>
-  <table>
-    ${techniqueTable}
-  </table>
-  <h2>Appointment Table</h2>
-  <table>
-    ${await appointmentTable}
-  </table>
+  <div class="tables-container">
+    <div class="table-wrapper">
+      <h2>Technique Table</h2>
+      <table class="technique-table">
+        ${techniqueTable}
+      </table>
+    </div>
+    <div class="table-wrapper">
+      <h2>Appointment Table</h2>
+      <table class="appointment-table">
+        ${await appointmentTable}
+      </table>
+    </div>
+  </div>
   <script>
-    const socket = new WebSocket(\`wss://\${window.location.host}\`);
+    const socket = new WebSocket('ws://localhost:3000/');
     socket.onmessage = function (event) {
       if (event.data === 'reload') {
         location.reload(); // Reload the page
@@ -77,6 +84,8 @@ function generateTechniqueTable(appointments, patients, doctors) {
             rowColor = 'yellow';
         }
 
+
+
         // Generate table row with appropriate background color
         const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td></tr>`;
 
@@ -91,7 +100,7 @@ function generateTechniqueTable(appointments, patients, doctors) {
 async function generateAppointmentTable(appointments) {
     let table = '<table>';
 
-    table += '<tr><th>Patient ID</th><th>Doctor ID</th><th>Time</th><th>Color</th><th>Action</th></tr>';
+    table += '<tr><th>Patient ID</th><th>Doctor ID</th><th>Time</th><th>Action</th></tr>';
 
     const sortedAppointments = sortAppointments(appointments);
     const appointmentCounts = {};
@@ -110,8 +119,9 @@ async function generateAppointmentTable(appointments) {
             rowColor = 'green';
         }
 
-        const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td><td>${rowColor}</td><td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td></tr>`;
+        const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td><td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td></tr>`;
         table += row;
+
     }
 
     table += '</table>';
@@ -175,6 +185,18 @@ async function findAvailableTime(appointment, sortedAppointments) {
     return appointment.appointmentTime;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 function getNumberText(number) {
     const numberTexts = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
     if (number < 10) {
@@ -194,6 +216,7 @@ async function saveData() {
     });
     location.reload();
 }
+
 
 function viewCard(patientId, doctorId, appointmentTime) {
     // Retrieve the detailed information about the appointment
@@ -219,6 +242,10 @@ function viewCard(patientId, doctorId, appointmentTime) {
     popup.document.close();
 }
 
+
+
+
+
 function sortAppointments(appointments) {
     return appointments.sort((a, b) => {
         if (a.patientId !== b.patientId) {
@@ -231,6 +258,7 @@ function sortAppointments(appointments) {
     });
 }
 
+
 function isAppointmentPossible(appointment, patient, doctor) {
     const doctorAvailability = doctor.hours.split('-').map(Number);
     const patientAvailability = patient.hours.split('-').map(Number);
@@ -239,14 +267,21 @@ function isAppointmentPossible(appointment, patient, doctor) {
     return isDoctorAvailable && isPatientAvailable;
 }
 
+
 function isAppointmentConflicting(appointment, appointments) {
     const patientAppointments = appointments.filter(a => a.patientId === appointment.patientId && a.appointmentTime === appointment.appointmentTime);
     const doctorAppointments = appointments.filter(a => a.doctorId === appointment.doctorId && a.appointmentTime === appointment.appointmentTime);
     return patientAppointments.length > 1 || doctorAppointments.length > 1;
 }
 
+
+
+
 function isAppointmentImpossible(appointment) {
     return appointment.appointmentTime === undefined;
 }
+
+
+
 
 module.exports = router;
