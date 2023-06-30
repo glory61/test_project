@@ -192,6 +192,7 @@ app.get('/', (req, res) => {
                 // Display the modal overlay
                 document.getElementById('modalMessage').innerHTML = message;
                 document.getElementById('overlay').classList.add('active');
+                const connectedClients = new Set();
                 connectedClients.forEach((client) => {
                     client.send('reload');
                 });

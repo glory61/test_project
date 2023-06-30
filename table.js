@@ -15,7 +15,6 @@ router.get('/table', async (req, res) => {
         const html = `
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="/styles_table.css">
 </head>
 <body>
 <style>body {
