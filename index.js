@@ -433,12 +433,12 @@ app.use (tableRouter);
 const server = app.listen(port, () => {
     console.log(`Server started at http://test-task-lzlh.onrender.com:${port}`);
 });
-server.on('upgrade', handleUpgrade);
-function handleUpgrade(request, socket, head) {
+
+server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
         wss.emit('connection', ws, request);
     });
-}
+});
 
 
 
