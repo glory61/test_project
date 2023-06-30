@@ -5,7 +5,6 @@ const { Patient, Doctor, Appointment } = require('./model.js');
 const router = express.Router();
 expressWs(router);
 
-
 router.get('/table', async (req, res) => {
     try {
         const patients = await Patient.find();
@@ -16,7 +15,7 @@ router.get('/table', async (req, res) => {
         const html = `
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="/styles_table.css">.
+  <link rel="stylesheet" type="text/css" href="/styles_table.css">
 </head>
 <body>
   <h2>Technique Table</h2>
@@ -28,7 +27,7 @@ router.get('/table', async (req, res) => {
     ${await appointmentTable}
   </table>
   <script>
-    const socket = new WebSocket('ws://localhost:3000/');
+    const socket = new WebSocket(\`wss://\${window.location.host}\`);
     socket.onmessage = function (event) {
       if (event.data === 'reload') {
         location.reload(); // Reload the page
@@ -78,8 +77,6 @@ function generateTechniqueTable(appointments, patients, doctors) {
             rowColor = 'yellow';
         }
 
-
-
         // Generate table row with appropriate background color
         const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td></tr>`;
 
@@ -115,7 +112,6 @@ async function generateAppointmentTable(appointments) {
 
         const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td><td>${rowColor}</td><td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td></tr>`;
         table += row;
-
     }
 
     table += '</table>';
@@ -179,18 +175,6 @@ async function findAvailableTime(appointment, sortedAppointments) {
     return appointment.appointmentTime;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 function getNumberText(number) {
     const numberTexts = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
     if (number < 10) {
@@ -210,7 +194,6 @@ async function saveData() {
     });
     location.reload();
 }
-
 
 function viewCard(patientId, doctorId, appointmentTime) {
     // Retrieve the detailed information about the appointment
@@ -236,10 +219,6 @@ function viewCard(patientId, doctorId, appointmentTime) {
     popup.document.close();
 }
 
-
-
-
-
 function sortAppointments(appointments) {
     return appointments.sort((a, b) => {
         if (a.patientId !== b.patientId) {
@@ -252,7 +231,6 @@ function sortAppointments(appointments) {
     });
 }
 
-
 function isAppointmentPossible(appointment, patient, doctor) {
     const doctorAvailability = doctor.hours.split('-').map(Number);
     const patientAvailability = patient.hours.split('-').map(Number);
@@ -261,21 +239,14 @@ function isAppointmentPossible(appointment, patient, doctor) {
     return isDoctorAvailable && isPatientAvailable;
 }
 
-
 function isAppointmentConflicting(appointment, appointments) {
     const patientAppointments = appointments.filter(a => a.patientId === appointment.patientId && a.appointmentTime === appointment.appointmentTime);
     const doctorAppointments = appointments.filter(a => a.doctorId === appointment.doctorId && a.appointmentTime === appointment.appointmentTime);
     return patientAppointments.length > 1 || doctorAppointments.length > 1;
 }
 
-
-
-
 function isAppointmentImpossible(appointment) {
     return appointment.appointmentTime === undefined;
 }
-
-
-
 
 module.exports = router;

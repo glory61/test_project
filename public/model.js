@@ -20,11 +20,8 @@ const appointmentSchema = new mongoose.Schema({
     appointmentTime: { type: Number },
 });
 
-
-
 const Patient = mongoose.model('Patient', patientSchema);
 const Doctor = mongoose.model('Doctor', doctorSchema);
 const Appointment = mongoose.model('Appointment', appointmentSchema);
-
 
 module.exports = { Patient, Doctor, Appointment };
