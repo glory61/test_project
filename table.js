@@ -19,6 +19,61 @@ router.get('/table', async (req, res) => {
   <link rel="stylesheet" type="text/css" href="/styles_table.css">
 </head>
 <body>
+<style>body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+}
+
+h2 {
+    margin-bottom: 10px;
+}
+
+.tables-container {
+    display: flex;
+    justify-content: center;
+    max-width: 1000px;
+}
+
+.table-wrapper {
+    flex: 1;
+    margin: 100px;
+    width: 50%;
+}
+
+table {
+    border-collapse: collapse;
+    width: 150%;
+}
+
+table td, table th {
+    padding: 8px;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+table th {
+    text-align: left;
+    background-color: #4CAF50;
+    color: white;
+}
+
+.technique-table {
+    background-color: #ffffff;
+    width: 50%;
+}
+
+.appointment-table {
+    background-color: #ffffff;
+    width: 50%; /* Updated width to match the technique table */
+}
+</style>
   <div class="tables-container">
     <div class="table-wrapper">
       <h2>Technique Table</h2>
