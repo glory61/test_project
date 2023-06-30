@@ -44,15 +44,19 @@ h2 {
 
 table {
     border-collapse: collapse;
+    border: 2px solid black;
+   
     width: 150%;
 }
 
 table td, table th {
     padding: 8px;
+ 
 }
 
 table tr:nth-child(even) {
     background-color: #f2f2f2;
+       border: 2px solid black;
 }
 
 table th {
@@ -60,6 +64,30 @@ table th {
     background-color: #4CAF50;
     color: white;
 }
+
+.save-button {
+ position: relative;
+  right: -140px;
+  top:-57px;
+  float: right;
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+
+.appointment-row td button {
+  background-color: #a2a2a2;
+  color: #000000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 
 .technique-table {
     background-color: #ffffff;
@@ -83,8 +111,11 @@ table th {
       <table class="appointment-table">
         ${await appointmentTable}
       </table>
+<button onclick="saveData()" class="save-button">Save Data</button>
     </div>
+   
   </div>
+  
   <script>
     const socket = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host);
     socket.onerror = function (error) {
@@ -106,6 +137,16 @@ socket.onclose = function (event) {
     };
     // Save Data function for front-end
     function saveData() {
+        
+    const appointments =  Appointment.find({ color: 'blue' });
+    appointments.forEach(async (appointment) => {
+        const previousAppointment = await Appointment.findOne({ _id: appointment._id });
+        if (previousAppointment.appointmentTime !== appointment.appointmentTime) {
+            appointment.color = 'blue';
+            await appointment.save();
+        }
+    });
+    location.reload();
       socket.send('saveData');
     }
   </script>
@@ -151,7 +192,7 @@ function generateTechniqueTable(appointments, patients, doctors) {
 
 
         // Generate table row with appropriate background color
-        const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td></tr>`;
+        const row = `<tr style="background-color: ${rowColor};"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td></tr>`;
 
         table += row;
     }
@@ -183,7 +224,13 @@ async function generateAppointmentTable(appointments) {
             rowColor = 'green';
         }
 
-        const row = `<tr style="background-color: ${rowColor}"><td>${appointment.patientId}</td><td>${appointment.doctorId}</td><td>${appointment.appointmentTime}</td><td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td></tr>`;
+        const row = `<tr class="appointment-row" style="background-color: ${rowColor}">
+  <td>${appointment.patientId}</td>
+  <td>${appointment.doctorId}</td>
+  <td>${appointment.appointmentTime}</td>
+  <td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td>
+</tr>
+`;
         table += row;
 
     }
@@ -197,7 +244,7 @@ async function generateAppointmentTable(appointments) {
     const blueAppointments = blueCount === 1 ? 'appointment' : 'appointments';
 
     table += `<p>${getNumberText(greenCount)} green ${greenAppointments}. ${getNumberText(blueCount)} blue ${blueAppointments}.</p>`;
-    table += '<button onclick="saveData()">Save Data</button>';
+
 
     return table;
 }
@@ -269,17 +316,6 @@ function getNumberText(number) {
     return number;
 }
 
-async function saveData() {
-    const appointments = await Appointment.find({ color: 'blue' });
-    appointments.forEach(async (appointment) => {
-        const previousAppointment = await Appointment.findOne({ _id: appointment._id });
-        if (previousAppointment.appointmentTime !== appointment.appointmentTime) {
-            appointment.color = 'blue';
-            await appointment.save();
-        }
-    });
-    location.reload();
-}
 
 
 function viewCard(patientId, doctorId, appointmentTime) {
