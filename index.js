@@ -141,6 +141,9 @@ app.get('/', (req, res) => {
         <textarea name="appointments" placeholder="Enter appointments data"></textarea>
         
         <button type="submit" onclick="submitForm()">Submit Data</button>
+         <form action="/cleardb" method="POST">
+            <button type="submit" onclick="clearDB(event)">Clear</button>
+        </form>
       </div>
 
       <div id="overlay" class="overlay">
@@ -187,6 +190,29 @@ app.get('/', (req, res) => {
           document.querySelector('textarea[name="doctors"]').value = '';
           document.querySelector('textarea[name="appointments"]').value = '';
         }
+        
+        function clearDB() {
+        // Send a request to the server to clear the database
+        event.preventDefault();
+        fetch('/cleardb', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.text())
+            .then(message => {
+                // Display the modal overlay
+                document.getElementById('modalMessage').innerHTML = message;
+                document.getElementById('overlay').classList.add('active');
+                connectedClients.forEach((client) => {
+                    client.send('reload');
+                });
+            })
+            .catch(error => {
+                console.error('Error clearing database:', error);
+            });
+    }
       </script>
     </body>
     </html>
