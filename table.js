@@ -89,7 +89,7 @@ table th {
     </div>
   </div>
   <script>
-    const socket = new WebSocket('ws://localhost:10000/');
+    const socket = new WebSocket('ws://test-task-lzlh.onrender.com:10000/');
     socket.onmessage = function (event) {
       if (event.data === 'reload') {
         location.reload(); // Reload the page
