@@ -438,7 +438,7 @@ function generateMessage(category, entries) {
 
 // Start the server
 const server = app.listen(port, () => {
-    console.log('Server started at http://localhost:' + port);
+    console.log('Server started at http://test-task-lzlh.onrender.com:' + port);
 });
 server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
