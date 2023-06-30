@@ -5,8 +5,7 @@ const tableRouter = require('./table');
 const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
 const WebSocket = require('ws');
-const path = require("path");
-
+const port = process.env.PORT || 8080;
 
 // MongoDB connection setup
 mongoose.connect('mongodb+srv://admin:123456admin@cluster0.bkoa8.mongodb.net/my?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
@@ -38,166 +37,176 @@ app.use(express.static('public'));
 // Serve the HTML page with the forms
 app.get('/', (req, res) => {
     res.send(`
-    <html>
-    <head>
-      <style>
-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-}
-.form-container {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-.form-container h3 {
-    margin-bottom: 10px;
-}
-.form-container textarea {
-    width: 100%;
-    height: 100px;
-    padding: 5px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    resize: vertical;
-}
+   <html>
+<head>
+        </head>
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+    }
 
-.form-container .button-group {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center; /* Add this line */
-}
+    .form-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
 
-.form-container .button-group button {
-    margin-bottom: 10px;
-    margin-left: 10px;
-    margin-right: 15px;
-}
-.form-container .button-group button:last-child {
-    align-self: flex-end;
-}
+    .form-container h3 {
+        margin-bottom: 10px;
+    }
 
-.form-container button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+    .form-container textarea {
+        width: 100%;
+        height: 100px;
+        padding: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        resize: vertical;
+    }
 
-/* Overlay styles */
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility 0s, opacity 0.3s;
-}
+    .form-container .button-group {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center; /* Add this line */
+    }
 
-.overlay.active {
-    visibility: visible;
-    opacity: 1;
-}
+    .form-container .button-group button {
+        margin-bottom: 10px;
+        margin-left: 10px;
+        margin-right: 15px;
+    }
+    .form-container .button-group button:last-child {
+        align-self: flex-end;
+    }
 
-.modal {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    text-align: center;
-}
+    .form-container button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 
-.modal h3 {
-    margin-bottom: 10px;
-}
+    /* Overlay styles */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s, opacity 0.3s;
+    }
 
-.modal p {
-    margin-bottom: 20px;
-}
+    .overlay.active {
+        visibility: visible;
+        opacity: 1;
+    }
 
-.modal button {
-    padding: 10px 20px;
-    background-color: #4CAF50;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+    .modal {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        text-align: center;
+    }
 
-      </style>
-    </head>
-    <body>
-      <div class="form-container">
-        <h3>Patients</h3>
-        <textarea name="patients" placeholder="Enter patients data"></textarea>
-        
-        <h3>Doctors</h3>
-        <textarea name="doctors" placeholder="Enter doctors data"></textarea>
-        
-        <h3>Appointments</h3>
-        <textarea name="appointments" placeholder="Enter appointments data"></textarea>
-        
+    .modal h3 {
+        margin-bottom: 10px;
+    }
+
+    .modal p {
+        margin-bottom: 20px;
+    }
+
+    .modal button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+<body>
+<div class="form-container">
+    <h3>Patients</h3>
+    <textarea name="patients" placeholder="Enter patients data"></textarea>
+
+    <h3>Doctors</h3>
+    <textarea name="doctors" placeholder="Enter doctors data"></textarea>
+
+    <h3>Appointments</h3>
+    <textarea name="appointments" placeholder="Enter appointments data"></textarea>
+
+    <div class="button-group">
         <button type="submit" onclick="submitForm()">Submit Data</button>
-         <form action="/cleardb" method="POST">
+        <form action="/cleardb" method="POST">
             <button type="submit" onclick="clearDB(event)">Clear</button>
         </form>
-      </div>
+    </div>
+</div>
 
-      <div id="overlay" class="overlay">
-        <div class="modal">
-          <h3>Data Submitted</h3>
-          <p id="modalMessage"></p>
-          <button onclick="closeModal()">Close</button>
-        </div>
-      </div>
+<div id="overlay" class="overlay">
+    <div class="modal">
+        <p id="modalMessage"></p>
+    </div>
+</div>
 
-      <script>
-        function submitForm() {
-          const patientsData = document.querySelector('textarea[name="patients"]').value;
-          const doctorsData = document.querySelector('textarea[name="doctors"]').value;
-          const appointmentsData = document.querySelector('textarea[name="appointments"]').value;
+<script>
+    function submitForm() {
+        const patientsData = document.querySelector('textarea[name="patients"]').value;
+        const doctorsData = document.querySelector('textarea[name="doctors"]').value;
+        const appointmentsData = document.querySelector('textarea[name="appointments"]').value;
 
-          // Send the form data to the server using fetch
-          fetch('/data', {
+        // Send the form data to the server using fetch
+        fetch('/data', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              patients: patientsData,
-              doctors: doctorsData,
-              appointments: appointmentsData
+                patients: patientsData,
+                doctors: doctorsData,
+                appointments: appointmentsData
             })
-          })
-          .then(response => response.text())
-          .then(message => {
-            // Display the modal overlay
-            document.getElementById('modalMessage').textContent = message;
-            document.getElementById('overlay').classList.add('active');
-          })
-          .catch(error => {
-            console.error('Error submitting form:', error);
-          });
-        }
-
-        
-        function clearDB() {
+        })
+            .then(response => response.text())
+            .then(message => {
+                // Display the modal overlay
+                document.getElementById('modalMessage').innerHTML = message;
+                document.getElementById('overlay').classList.add('active');
+                connectedClients.forEach((client) => {
+                    client.send('reload');
+                });
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+            });
+    }
+    function closeModal() {
+        // Close the modal overlay and clear the form
+        document.getElementById('overlay').classList.remove('active');
+        document.querySelector('textarea[name="patients"]').value = '';
+        document.querySelector('textarea[name="doctors"]').value = '';
+        document.querySelector('textarea[name="appointments"]').value = '';
+    }
+    function clearDB() {
         // Send a request to the server to clear the database
         event.preventDefault();
         fetch('/cleardb', {
@@ -219,16 +228,11 @@ body {
                 console.error('Error clearing database:', error);
             });
     }
-     function closeModal() {
-          // Close the modal overlay and clear the form
-          document.getElementById('overlay').classList.remove('active');
-          document.querySelector('textarea[name="patients"]').value = '';
-          document.querySelector('textarea[name="doctors"]').value = '';
-          document.querySelector('textarea[name="appointments"]').value = '';
-        }
-      </script>
-    </body>
-    </html>
+
+</script>
+</body>
+</html>
+
   `);
 });
 
@@ -433,8 +437,8 @@ function generateMessage(category, entries) {
 
 
 // Start the server
-const server = app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+const server = app.listen(port, () => {
+    console.log('Server started at http://localhost:' + port);
 });
 server.on('upgrade', (request, socket, head) => {
     wss.handleUpgrade(request, socket, head, (ws) => {
