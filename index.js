@@ -5,6 +5,7 @@ const tableRouter = require('./table');
 const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
 const WebSocket = require('ws');
+const path = require("path");
 
 
 // MongoDB connection setup
@@ -30,14 +31,14 @@ wss.on('connection', (ws) => {
         connectedClients.delete(ws);
     });
 });
-
-
-
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 // Serve the HTML page with the forms
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname, '/index.html'));
+});
 
 
 // Endpoint for submitting all data
@@ -227,6 +228,7 @@ app.post('/cleardb', async (req, res) => {
 
 
 // Mount table router
+app.use (tableRouter);
 function generateMessage(category, entries) {
     if (entries.length > 0) {
         let message = `<b>${category}:</b><br>`;
