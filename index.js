@@ -21,13 +21,13 @@ const wss = new WebSocket.Server({ noServer: true });
 // Store connected clients
 const connectedClients = new Set();
 
-wss.on('connection', (ws) => {
+wss.on('connection', (wss) => {
     // Add client to connected clients set
-    connectedClients.add(ws);
+    connectedClients.add(wss);
     console.log('A client has connected');
     // Remove client from connected clients set on close event
-    ws.on('close', () => {
-        connectedClients.delete(ws);
+    wss.on('close', () => {
+        connectedClients.delete(wss);
         console.log('A client has disconnected');
     });
 });
@@ -435,8 +435,8 @@ const server = app.listen(port, () => {
 });
 
 server.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
+    wss.handleUpgrade(request, socket, head, (wss) => {
+        wss.emit('connection', wss, request);
     });
 });
 
