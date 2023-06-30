@@ -1,7 +1,6 @@
 const express = require('express');
 const expressWs = require('express-ws');
 const { Patient, Doctor, Appointment } = require('./model.js');
-const port = process.env.PORT || 10000;
 const router = express.Router();
 expressWs(router);
 
@@ -93,6 +92,7 @@ table th {
     socket.onmessage = function (event) {
       if (event.data === 'reload') {
         location.reload(); // Reload the page
+        console.log('page reloaded');
       }
     };
     // Save Data function for front-end

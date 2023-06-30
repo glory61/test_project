@@ -24,12 +24,15 @@ const connectedClients = new Set();
 wss.on('connection', (ws) => {
     // Add client to connected clients set
     connectedClients.add(ws);
-
+    console.log('A client has connected');
     // Remove client from connected clients set on close event
     ws.on('close', () => {
         connectedClients.delete(ws);
+        console.log('A client has disconnected');
     });
 });
+
+
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
