@@ -21,13 +21,13 @@ const wss = new WebSocket.Server({ noServer: true });
 // Store connected clients
 const connectedClients = new Set();
 
-wss.on('connection', (wss) => {
+wss.on('connection', (ws) => {
     // Add client to connected clients set
-    connectedClients.add(wss);
+    connectedClients.add(ws);
     console.log('A client has connected');
     // Remove client from connected clients set on close event
-    wss.on('close', () => {
-        connectedClients.delete(wss);
+    ws.on('close', () => {
+        connectedClients.delete(ws);
         console.log('A client has disconnected');
     });
 });
@@ -433,12 +433,12 @@ app.use (tableRouter);
 const server = app.listen(port, () => {
     console.log(`Server started at http://test-task-lzlh.onrender.com:${port}`);
 });
-
-server.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (wss) => {
-        wss.emit('connection', wss, request);
+server.on('upgrade', handleUpgrade);
+function handleUpgrade(request, socket, head) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
     });
-});
+}
 
 
 

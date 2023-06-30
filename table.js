@@ -86,7 +86,19 @@ table th {
     </div>
   </div>
   <script>
-    const socket = new WebSocket('wss://test-task-lzlh.onrender.com');
+    const socket = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host);
+    socket.onerror = function (error) {
+  console.log('WebSocket Error: ', error);
+};
+
+socket.onopen = function (event) {
+  console.log('WebSocket is open now.');
+};
+
+socket.onclose = function (event) {
+  console.log('WebSocket is closed now.');
+};
+
     socket.onmessage = function (event) {
       if (event.data === 'reload') {
         location.reload(); // Reload the page
