@@ -15,23 +15,6 @@ db.once('open', () => {
     console.log('Connected to MongoDB');
 });
 
-// Create WebSocket server
-const wss = new WebSocket.Server({ noServer: true });
-
-// Store connected clients
-const connectedClients = new Set();
-
-wss.on('connection', (ws) => {
-    // Add client to connected clients set
-    connectedClients.add(ws);
-    console.log('A client has connected');
-    // Remove client from connected clients set on close event
-    ws.on('close', () => {
-        connectedClients.delete(ws);
-        console.log('A client has disconnected');
-    });
-});
-
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -231,6 +214,23 @@ app.get('/', (req, res) => {
                 console.error('Error clearing database:', error);
             });
     }
+    // Create WebSocket server
+const wss = new WebSocket.Server({ noServer: true });
+
+// Store connected clients
+const connectedClients = new Set();
+    
+    
+    wss.on('connection', (ws) => {
+    // Add client to connected clients set
+    connectedClients.add(ws);
+    console.log('A client has connected');
+    // Remove client from connected clients set on close event
+    ws.on('close', () => {
+        connectedClients.delete(ws);
+        console.log('A client has disconnected');
+    });
+});
 
 </script>
 </body>
