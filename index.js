@@ -6,14 +6,9 @@ const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
 const WebSocket = require('ws');
 const port = 10000;
+require('dotenv').config();
 
-// MongoDB connection setup
-mongoose.connect('mongodb+srv://admin:123456admin@cluster0.bkoa8.mongodb.net/my?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true });
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-    console.log('Connected to MongoDB');
-});
+
 
 // Create WebSocket server
 const wss = new WebSocket.Server({ noServer: true });
@@ -35,6 +30,17 @@ wss.on('connection', (ws) => {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use (tableRouter);
+// MongoDB connection setup
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', () => {
+    console.log('Connected to MongoDB');
+});
+
+
+
 // Serve the HTML page with the forms
 app.get('/', (req, res) => {
     res.send(`
@@ -72,25 +78,29 @@ app.get('/', (req, res) => {
         resize: vertical;
     }
 
-    .form-container .button-group {
+   .form-container .button-group {
         display: flex;
-        justify-content: flex-end;
-        align-items: center; /* Add this line */
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
     }
 
     .form-container .button-group button {
-        margin-bottom: 10px;
-        margin-left: 10px;
-        margin-right: 15px;
+         margin-top:-25px;
+    }
+
+    .form-container .button-group .clear-button {
+        margin-left: auto;
     }
     .form-container .button-group button:last-child {
         align-self: flex-end;
+         margin-left: 100px;
+         margin-top:-10px;
     }
 
     .form-container button {
         padding: 10px 20px;
         background-color: #4CAF50;
-        color: #fff;
         border: none;
         border-radius: 5px;
         cursor: pointer;
@@ -158,7 +168,8 @@ app.get('/', (req, res) => {
     <div class="button-group">
         <button type="submit" onclick="submitForm()">Submit Data</button>
         <form action="/cleardb" method="POST">
-            <button type="submit" onclick="clearDB(event)">Clear</button>
+          <button type="submit" onclick="clearDB(event)" class="clear-button">Clear</button>
+
         </form>
     </div>
 </div>
@@ -258,19 +269,17 @@ app.post('/data', async (req, res) => {
 
     // Process patients
     const patientsArray = patientsData.split('\n').map((line) => line.trim());
-
     for (const patientLine of patientsArray) {
         const patientData = patientLine.split(',').map((item) => item.trim());
         const id = Number.parseInt(patientData[0]);
-        let hours = undefined;
-        let name = undefined;
-        let dob = undefined;
+        let hours,name,dob = undefined;
+
 
         // Validate data format here
         const hoursPattern = /^([7-9]|1[0-9]|2[0-4])(?:-([7-9]|1[0-9]|2[0-4]))?$/;
         const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
         const dobPattern = /^\d{2}\.\d{2}\.\d{4}$/;
-
+        //check for name/dob
         if (!(isNaN(id) || !hoursPattern.test(patientData[1]))) {
             if (patientData.length > 2 && namePattern.test(patientData[2])) {
                 name = patientData[2];
@@ -320,34 +329,53 @@ app.post('/data', async (req, res) => {
     for (const doctorLine of doctorsArray) {
         const doctorData = doctorLine.split(',').map((item) => item.trim());
         const id = Number.parseInt(doctorData[0]);
-        const hours = doctorData[1];
-        const name = doctorData[2];
+        let hours,name,dob = undefined;
 
-        try {
-            const existingDoctor = await Doctor.findOne({ id });
-            if (existingDoctor) {
-                duplicateDoctors.push(doctorLine);
-                continue;
+
+        // Validate data format here
+        const hoursPattern = /^([7-9]|1[0-9]|2[0-4])(?:-([7-9]|1[0-9]|2[0-4]))?$/;
+        const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+        const dobPattern = /^\d{2}\.\d{2}\.\d{4}$/;
+        //check for name/dob
+        if (!(isNaN(id) || !hoursPattern.test(doctorData[1]))) {
+            if (doctorData.length > 2 && namePattern.test(doctorData[2])) {
+                name = doctorData[2];
             }
 
-            // Validate data format here
-            const hoursPattern = /^([7-9]|1[0-9]|2[0-4])-([7-9]|1[0-9]|2[0-4])$/;
-            const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)?$/;
-            if (isNaN(id) || !hoursPattern.test(hours) || (name && !namePattern.test(name))) {
-                failedFormatDoctors.push(doctorLine);
-                continue;
+
+            if (doctorData.length > 3 && dobPattern.test(doctorData[3])) {
+                dob = doctorData[3];
+            } else if (doctorData.length > 2 && dobPattern.test(doctorData[2])) {
+                dob = doctorData[2];
+            }
+
+            // Extract hours from the doctorData
+            const hoursMatch = doctorData[1].match(hoursPattern);
+            if (hoursMatch) {
+                hours = hoursMatch[0];
             }
 
             const doctor = new Doctor({
                 id,
                 hours,
-                name
+                name,
+                dob
             });
 
-            await doctor.save();
-            successfulDoctors.push(doctorLine);
-        } catch (error) {
-            console.error('Error saving doctor:', error);
+            try {
+                const existingDoctor = await Doctor.findOne({ id });
+                if (existingDoctor) {
+                    duplicateDoctors.push(doctorLine);
+                    continue;
+                }
+
+                await doctor.save();
+                successfulDoctors.push(doctorLine);
+            } catch (error) {
+                console.error('Error saving patient:', error);
+            }
+        } else {
+            failedFormatDoctors.push(doctorLine);
         }
     }
 
@@ -367,6 +395,14 @@ app.post('/data', async (req, res) => {
                 continue;
             }
 
+            // Check if patient or doctor exists
+            const existingPatient = await Patient.findOne({ id: patientId });
+            const existingDoctor = await Doctor.findOne({ id: doctorId });
+            if (!existingPatient ||!existingDoctor) {
+                failedFormatAppointments.push(appointmentLine);
+                continue;
+            }
+
             const appointment = new Appointment({
                 patientId,
                 doctorId,
@@ -375,7 +411,7 @@ app.post('/data', async (req, res) => {
 
             await appointment.save();
         } catch (error) {
-            console.error('Error saving appointment:', error);
+           console.error('Error saving appointment:', error);
         }
     }
 
@@ -448,9 +484,6 @@ app.post('/cleardb', async (req, res) => {
 });
 
 
-// Mount table router
-app.use (tableRouter);
-
 // Start the server
 const server = app.listen(port, () => {
     console.log(`Server started at http://localhost:${port}`);
@@ -461,7 +494,6 @@ function handleUpgrade(request, socket, head) {
         wss.emit('connection', ws, request);
     });
 }
-
 
 
 

@@ -67,11 +67,10 @@ table th {
 
 .save-button {
  position: relative;
-  right: -140px;
-  top:-57px;
+  right: -147px;
+  top:-58px;
   float: right;
   background-color: #4CAF50;
-  color: white;
   padding: 10px 20px;
   border: none;
   border-radius: 4px;
@@ -86,6 +85,7 @@ table th {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 16px;
 }
 
 
@@ -101,13 +101,13 @@ table th {
 </style>
   <div class="tables-container">
     <div class="table-wrapper">
-      <h2>Technique Table</h2>
+
       <table class="technique-table">
         ${techniqueTable}
       </table>
     </div>
     <div class="table-wrapper">
-      <h2>Appointment Table</h2>
+    
       <table class="appointment-table">
         ${await appointmentTable}
       </table>
@@ -206,45 +206,44 @@ async function generateAppointmentTable(appointments) {
     let table = '<table>';
 
     table += '<tr><th>Patient ID</th><th>Doctor ID</th><th>Time</th><th>Action</th></tr>';
-
+    let greenCount = 0;
+    let blueCount = 0;
     const sortedAppointments = sortAppointments(appointments);
-    const appointmentCounts = {};
 
     for (const appointment of sortedAppointments) {
+        let rowColor;
         // Find an available time for the appointment
         const newTime = await findAvailableTime(appointment, sortedAppointments);
         // If the available time differs from the original appointment time,
         // update the appointment time and set the row color to blue
         if (newTime !== appointment.appointmentTime) {
             appointment.appointmentTime = newTime;
-            appointmentCounts[appointment.doctorId] = (appointmentCounts[appointment.doctorId] || 0) + 1;
             rowColor = 'blue'; // Set row color to blue when the appointment time has moved
+            blueCount++;
         } else {
             // Else if the appointment does not conflict, set the row color to green
             rowColor = 'green';
+            greenCount++;
         }
 
         const row = `<tr class="appointment-row" style="background-color: ${rowColor}">
-  <td>${appointment.patientId}</td>
-  <td>${appointment.doctorId}</td>
-  <td>${appointment.appointmentTime}</td>
-  <td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td>
-</tr>
-`;
+    <td>${appointment.patientId}</td>
+    <td>${appointment.doctorId}</td>
+    <td>${appointment.appointmentTime}</td>
+    <td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td>
+  </tr>`;
         table += row;
     }
 
     table += '</table>';
-    const greenCount = Object.values(appointmentCounts).filter((count) => count >= 1).reduce((acc, count) => acc + count, 0);
-    const blueCount = Object.values(appointmentCounts).filter((count) => count > 1).reduce((acc, count) => acc + count, 0);
 
     const greenAppointments = greenCount === 1 ? 'appointment' : 'appointments';
     const blueAppointments = blueCount === 1 ? 'appointment' : 'appointments';
 
     table += `<p>${getNumberText(greenCount)} green ${greenAppointments}. ${getNumberText(blueCount)} blue ${blueAppointments}.</p>`;
 
-
     return table;
+
 }
 
 async function findAvailableTime(appointment, sortedAppointments) {
@@ -307,7 +306,7 @@ async function findAvailableTime(appointment, sortedAppointments) {
 
 
 function getNumberText(number) {
-    const numberTexts = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+    const numberTexts = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
     if (number < 10) {
         return numberTexts[number];
     }
