@@ -380,7 +380,7 @@ app.post('/data', async (req, res) => {
         message += `<b><br><br>Wrong format patients:</b><br>${failedFormatPatients.join('<br>')}`;
     }
     if (failedFormatDoctors.length > 0) {
-        message += `<b><br><br>Wrong format patients:</b><br>${failedFormatDoctors.join('<br>')}`;
+        message += `<b><br><br>Wrong format doctors:</b><br>${failedFormatDoctors.join('<br>')}`;
     }
     if (failedFormatAppointments.length > 0) {
         message += `<b><br><br>Wrong format appointments:</b><br>${failedFormatAppointments.join('<br>')}`;
@@ -431,7 +431,7 @@ app.use (tableRouter);
 
 // Start the server
 const server = app.listen(port, () => {
-    console.log(`Server started at http://test-task-lzlh.onrender.com:${port}`);
+    console.log(`Server started at http://localhost:${port}`);
 });
 server.on('upgrade', handleUpgrade);
 function handleUpgrade(request, socket, head) {
