@@ -4,7 +4,7 @@ const patientSchema = new mongoose.Schema({
     id: { type: Number, required: true, unique: true },
     hours: { type: String, required: true },
     name: { type: String },
-    dob: { type: String }
+    dob: { type: String, alias: 'dateOfBirth' }
 });
 
 const doctorSchema = new mongoose.Schema({

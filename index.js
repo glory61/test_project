@@ -262,36 +262,57 @@ app.post('/data', async (req, res) => {
     for (const patientLine of patientsArray) {
         const patientData = patientLine.split(',').map((item) => item.trim());
         const id = Number.parseInt(patientData[0]);
-        const hours = patientData[1];
-        const name = patientData[2];
+        let hours = undefined;
+        let name = undefined;
+        let dob = undefined;
 
-        try {
-            const existingPatient = await Patient.findOne({ id });
-            if (existingPatient) {
-                duplicatePatients.push(patientLine);
-                continue;
+        // Validate data format here
+        const hoursPattern = /^([7-9]|1[0-9]|2[0-4])(?:-([7-9]|1[0-9]|2[0-4]))?$/;
+        const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+        const dobPattern = /^\d{2}\.\d{2}\.\d{4}$/;
+
+        if (!(isNaN(id) || !hoursPattern.test(patientData[1]))) {
+            if (patientData.length > 2 && namePattern.test(patientData[2])) {
+                name = patientData[2];
             }
 
-            // Validate data format here
-            const hoursPattern = /^([7-9]|1[0-9]|2[0-4])-([7-9]|1[0-9]|2[0-4])$/;
-            const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)?$/;
-            if (isNaN(id) || !hoursPattern.test(hours) || (name && !namePattern.test(name))) {
-                failedFormatPatients.push(patientLine);
-                continue;
+            if (patientData.length > 3 && dobPattern.test(patientData[3])) {
+                dob = patientData[3];
+            } else if (patientData.length > 2 && dobPattern.test(patientData[2])) {
+                dob = patientData[2];
+            }
+
+            // Extract hours from the patientData
+            const hoursMatch = patientData[1].match(hoursPattern);
+            if (hoursMatch) {
+                hours = hoursMatch[0];
             }
 
             const patient = new Patient({
                 id,
                 hours,
-                name
+                name,
+                dob
             });
 
-            await patient.save();
-            successfulPatients.push(patientLine);
-        } catch (error) {
-            console.error('Error saving patient:', error);
+            try {
+                const existingPatient = await Patient.findOne({ id });
+                if (existingPatient) {
+                    duplicatePatients.push(patientLine);
+                    continue;
+                }
+
+                await patient.save();
+                successfulPatients.push(patientLine);
+            } catch (error) {
+                console.error('Error saving patient:', error);
+            }
+        } else {
+            failedFormatPatients.push(patientLine);
         }
+
     }
+
 
     // Process doctors
     const doctorsArray = doctorsData.split('\n').map((line) => line.trim());
@@ -376,15 +397,16 @@ app.post('/data', async (req, res) => {
     if (duplicateAppointments.length > 0) {
         message += `<b><br><br>Duplicate Appointments:</b><br>${duplicateAppointments.join('<br>')}`;
     }
-    if (failedFormatPatients.length > 0) {
-        message += `<b><br><br>Wrong format patients:</b><br>${failedFormatPatients.join('<br>')}`;
+    if (Array.isArray(failedFormatPatients) && failedFormatPatients.filter(e => e).length > 0) {
+        message += `<b><br><br>Wrong format Patiens:</b><br>${failedFormatPatients.join('<br>')}`;
     }
-    if (failedFormatDoctors.length > 0) {
-        message += `<b><br><br>Wrong format doctors:</b><br>${failedFormatDoctors.join('<br>')}`;
+    if (Array.isArray(failedFormatDoctors) && failedFormatDoctors.filter(e => e).length > 0) {
+        message += `<b><br><br>Wrong format Doctors:</b><br>${failedFormatDoctors.join('<br>')}`;
     }
-    if (failedFormatAppointments.length > 0) {
-        message += `<b><br><br>Wrong format appointments:</b><br>${failedFormatAppointments.join('<br>')}`;
+    if (Array.isArray(failedFormatAppointments) && failedFormatAppointments.filter(e => e).length > 0) {
+        message += `<b><br><br>Wrong format Appointments:</b><br>${failedFormatAppointments.join('<br>')}`;
     }
+
     if (message !== '') {
         message += '<br><br>';
     }
@@ -392,7 +414,7 @@ app.post('/data', async (req, res) => {
 
 
 
-  // Set the content type to HTML
+    res.setHeader('Content-Type', 'text/html'); // Set the content type to HTML
     res.send(`<html>
         <h3><b>Data Submitted</b></h3>
         <p>${message}</p>
