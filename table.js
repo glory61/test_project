@@ -14,6 +14,7 @@ router.get('/table', async (req, res) => {
         const html = `
 <html>
 <head>
+<title>Test task</title>
 </head>
 <body>
 <style>

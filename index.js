@@ -46,6 +46,7 @@ app.get('/', (req, res) => {
     res.send(`
 <html>
 <head>
+<title>Test task</title>
     <style>
         body {
             display: flex;
