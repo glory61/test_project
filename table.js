@@ -16,7 +16,8 @@ router.get('/table', async (req, res) => {
 <head>
 </head>
 <body>
-<style>body {
+<style>
+body {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -98,6 +99,16 @@ table th {
     background-color: #ffffff;
     width: 50%; /* Updated width to match the technique table */
 }
+.appointment-card {
+  position: relative;
+  top: 47%;
+  right: -118%;
+  transform: translate(50%, -50%);
+  outline: 1px solid black;
+  padding: 10px
+}
+
+
 </style>
   <div class="tables-container">
     <div class="table-wrapper">
@@ -111,7 +122,7 @@ table th {
       <table class="appointment-table">
         ${await appointmentTable}
       </table>
-<button onclick="saveData()" class="save-button">Save Data</button>
+
     </div>
    
   </div>
@@ -136,19 +147,114 @@ socket.onclose = function (event) {
       }
     };
     // Save Data function for front-end
-    function saveData() {
-        
-    const appointments =  Appointment.find({ color: 'blue' });
-    appointments.forEach(async (appointment) => {
-        const previousAppointment = await Appointment.findOne({ _id: appointment._id });
-        if (previousAppointment.appointmentTime !== appointment.appointmentTime) {
-            appointment.color = 'blue';
-            await appointment.save();
+async function saveData() {
+     try {
+        const rows = document.getElementsByClassName('appointment-row');
+        const idsToBeUpdated = [];
+        let newAppointmentTime = '';
+
+        for (const row of rows) {
+            if (row.style.backgroundColor === 'blue') {
+                const patientId = row.cells[0].textContent;
+                const doctorId = row.cells[1].textContent;
+                const appointmentTime = row.cells[2].textContent;
+
+                idsToBeUpdated.push({ patientId, doctorId, appointmentTime });
+                if (!newAppointmentTime) {
+                    newAppointmentTime = appointmentTime;
+                }
+            }
         }
-    });
-    location.reload();
-      socket.send('saveData');
+
+        const response = await fetch('/saveData', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ appointmentTime: newAppointmentTime, idsToBeUpdated: idsToBeUpdated })
+        });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      if (data.success) {
+        location.reload();
+        socket.send('saveData');
+      } else {
+        throw new Error(data.error);
+      }
+    } else {
+      throw new Error('Network response was not ok');
     }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+
+let currentAppointmentCard = null;
+async function viewCard(patientId, doctorId, appointmentTime) {
+  try {
+    const url = '/viewCard?patientId=' + patientId + '&doctorId=' + doctorId + '&appointmentTime=' + encodeURIComponent(appointmentTime);
+    const response = await fetch(url);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const patient = data.patient;
+      const doctor = data.doctor;
+      
+      if (data.success) {
+        // Create the content for the pop-up window
+        let content = '';
+        content += '<p><strong>Patient ID:</strong> ' + patient.id + '</p>';
+        content += '<p><strong>Doctor ID:</strong> ' + doctor.id + '</p>';
+        if (doctor.name) {
+            content += '<p><strong>Doctor Name:</strong> ' + doctor.name + '</p>';
+        }
+        if (patient.name) {
+            content += '<p><strong>Patient Name:</strong> ' + patient.name + '</p>';
+        }
+        if (patient.dob) {
+            content += '<p><strong>Patient Date of Birth:</strong> ' + patient.dob + '</p>';
+        }
+        if (doctor.dob) {
+            content += '<p><strong>Doctor Date of Birth:</strong> ' + doctor.dob + '</p>';
+        }
+    
+            content += '<p><strong>Appointment Time:</strong> ' + appointmentTime + '</p>';
+        
+        // Create the appointment card element
+        const appointmentCard = document.createElement('div');
+        appointmentCard.classList.add('appointment-card');
+        appointmentCard.innerHTML = content;
+
+        // Remove the current appointment card if it exists
+        if (currentAppointmentCard) {
+          currentAppointmentCard.remove();
+        }
+
+        // Position the appointment card in the top-right corner
+        const tableWrapper = document.querySelector('.table-wrapper');
+        tableWrapper.appendChild(appointmentCard);
+
+        // Update the current appointment card
+        currentAppointmentCard = appointmentCard;
+      } else {
+        console.error('Failed to retrieve appointment data:', data.error);
+      }
+    } else {
+      throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+
+
+
+
+
   </script>
 </body>
 </html>
@@ -159,7 +265,70 @@ socket.onclose = function (event) {
         res.send('Failed to retrieve data');
     }
 });
+const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
 
+router.post('/saveData', async (req, res) => {
+    try {
+        console.log('Request received: /saveData');
+
+        const idsToBeUpdated = req.body.idsToBeUpdated;
+        console.log('IDs to be updated:', idsToBeUpdated);
+
+        for (const idObj of idsToBeUpdated) {
+            const { patientId, doctorId, appointmentTime } = idObj;
+
+            const appointment = await Appointment.findOne(
+                {
+                    patientId,
+                    doctorId
+                }
+            );
+
+            if (appointment) {
+                if (appointment.appointmentTime !== Number(appointmentTime)) {
+                    appointment.appointmentTime = Number(appointmentTime); // Update the appointment time
+                    await appointment.save(); // Save the updated appointment
+                    console.log('Appointment found and updated:', appointment);
+                } else {
+                    console.log('Appointment already has the same time:', appointment);
+                }
+            } else {
+                console.log('Appointment not found for ID:', idObj);
+            }
+        }
+
+        console.log('Data saved successfully');
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error occurred:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+
+
+
+
+
+
+
+router.get('/viewCard', async (req, res) => {
+    try {
+        const patientId = req.query.patientId;
+        const doctorId = req.query.doctorId;
+        const patient = await Patient.findOne({ id: patientId });
+        const doctor = await Doctor.findOne({ id: doctorId });
+        if (!patient || !doctor) {
+            throw new Error('Patient or Doctor not found');
+        }
+        res.json({ success: true, patient, doctor });
+    } catch (error) {
+        res.json({ success: false, error });
+    }
+});
 function generateTechniqueTable(appointments, patients, doctors) {
     let table = '<table>';
 
@@ -204,34 +373,29 @@ function generateTechniqueTable(appointments, patients, doctors) {
 
 async function generateAppointmentTable(appointments) {
     let table = '<table>';
-
     table += '<tr><th>Patient ID</th><th>Doctor ID</th><th>Time</th><th>Action</th></tr>';
     let greenCount = 0;
     let blueCount = 0;
-    const sortedAppointments = sortAppointments(appointments);
 
-    for (const appointment of sortedAppointments) {
+    for (const appointment of appointments) {
         let rowColor;
-        // Find an available time for the appointment
-        const newTime = await findAvailableTime(appointment, sortedAppointments);
-        // If the available time differs from the original appointment time,
-        // update the appointment time and set the row color to blue
+
+        const newTime = await findAvailableTime(appointment, appointments);
         if (newTime !== appointment.appointmentTime) {
             appointment.appointmentTime = newTime;
-            rowColor = 'blue'; // Set row color to blue when the appointment time has moved
+            rowColor = 'blue';
             blueCount++;
         } else {
-            // Else if the appointment does not conflict, set the row color to green
             rowColor = 'green';
             greenCount++;
         }
 
         const row = `<tr class="appointment-row" style="background-color: ${rowColor}">
-    <td>${appointment.patientId}</td>
-    <td>${appointment.doctorId}</td>
-    <td>${appointment.appointmentTime}</td>
-    <td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, ${appointment.appointmentTime})">View Card</button></td>
-  </tr>`;
+      <td>${appointment.patientId}</td>
+      <td>${appointment.doctorId}</td>
+      <td>${appointment.appointmentTime}</td>
+      <td><button onclick="viewCard(${appointment.patientId}, ${appointment.doctorId}, '${appointment.appointmentTime}')" class="view-button">View Card</button></td>
+    </tr>`;
         table += row;
     }
 
@@ -239,14 +403,12 @@ async function generateAppointmentTable(appointments) {
 
     const greenAppointments = greenCount === 1 ? 'appointment' : 'appointments';
     const blueAppointments = blueCount === 1 ? 'appointment' : 'appointments';
-
     table += `<p>${getNumberText(greenCount)} green ${greenAppointments}. ${getNumberText(blueCount)} blue ${blueAppointments}.</p>`;
-
+    table += '<button onclick="saveData()" class="save-button">Save Data</button>';
     return table;
-
 }
 
-async function findAvailableTime(appointment, sortedAppointments) {
+async function findAvailableTime(appointment, appointments) {
     // Fetch the doctor and patient from the database
     const doctor = await Doctor.findOne({ id: appointment.doctorId });
     const patient = await Patient.findOne({ id: appointment.patientId });
@@ -263,44 +425,27 @@ async function findAvailableTime(appointment, sortedAppointments) {
 
     // Function to check if a time conflicts with any other appointments
     const isConflicting = (time) => {
-        return sortedAppointments.some(a => a.appointmentTime === time &&
-            (a.doctorId === appointment.doctorId || a.patientId === appointment.patientId));
+        return appointments.some(
+            (a) =>
+                a.appointmentTime === time &&
+                (a.doctorId === appointment.doctorId || a.patientId === appointment.patientId) &&
+                a !== appointment // Exclude the current appointment from the check
+        );
     };
 
-    // If the appointment time is conflicting, find a new time slot
-    if (isConflicting(appointment.appointmentTime)) {
-        let newTime = commonWorkingHours.start;
+    // Find the next available time slot within the working hours
+    let newTime = commonWorkingHours.start;
 
-        // Try to find a time slot moving forward within the working hours
-        while (newTime <= commonWorkingHours.end) {
-            if (!isConflicting(newTime)) {
-                return newTime;
-            }
-            newTime++;
+    while (newTime <= commonWorkingHours.end) {
+        if (!isConflicting(newTime)) {
+            return newTime;
         }
-
-        // If no time slot is found, try to find a time slot moving backward within the working hours
-        newTime = commonWorkingHours.end;
-        while (newTime >= commonWorkingHours.start) {
-            if (!isConflicting(newTime)) {
-                return newTime;
-            }
-            newTime--;
-        }
+        newTime++;
     }
 
-    // If the appointment time is not conflicting, keep it unchanged
+    // If no available time slot is found, return the original appointment time
     return appointment.appointmentTime;
 }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -315,45 +460,6 @@ function getNumberText(number) {
 
 
 
-function viewCard(patientId, doctorId, appointmentTime) {
-    // Retrieve the detailed information about the appointment
-    const patient = Patient.find();
-    const doctor = Doctor.find();
-
-    // Create the content for the pop-up window
-    let content = `<h2>Appointment Details</h2>`;
-    content += `<p><strong>Patient ID:</strong> ${patientId}</p>`;
-    content += `<p><strong>Doctor ID:</strong> ${doctorId}</p>`;
-    content += `<p><strong>Patient Name:</strong> ${patient.name}</p>`;
-    content += `<p><strong>Doctor Name:</strong> ${doctor.name}</p>`;
-    if (patient.dob) {
-        content += `<p><strong>Patient Date of Birth:</strong> ${patient.dob}</p>`;
-    }
-    if (appointmentTime) {
-        content += `<p><strong>Appointment Time:</strong> ${appointmentTime}</p>`;
-    }
-
-    // Create the pop-up window
-    const popup = window.open('', 'Appointment Card', 'width=400,height=300');
-    popup.document.write(content);
-    popup.document.close();
-}
-
-
-
-
-
-function sortAppointments(appointments) {
-    return appointments.sort((a, b) => {
-        if (a.patientId !== b.patientId) {
-            return a.patientId - b.patientId;
-        } else if (a.doctorId !== b.doctorId) {
-            return a.doctorId - b.doctorId;
-        } else {
-            return a.appointmentTime - b.appointmentTime;
-        }
-    });
-}
 
 
 function isAppointmentPossible(appointment, patient, doctor) {
@@ -373,12 +479,9 @@ function isAppointmentConflicting(appointment, appointments) {
 
 
 
-
 function isAppointmentImpossible(appointment) {
     return appointment.appointmentTime === undefined;
 }
-
-
 
 
 module.exports = router;

@@ -44,133 +44,144 @@ db.once('open', () => {
 // Serve the HTML page with the forms
 app.get('/', (req, res) => {
     res.send(`
-   <html>
+<html>
 <head>
-        </head>
-<style>
-    body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        font-family: Arial, sans-serif;
-        background-color: #f5f5f5;
-    }
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
 
-    .form-container {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
+        .form-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
 
-    .form-container h3 {
-        margin-bottom: 10px;
-    }
+        .form-container > div {
+            margin: 10px;
+            flex-basis: calc(33.33% - 20px);
+        }
 
-    .form-container textarea {
-        width: 100%;
-        height: 100px;
-        padding: 5px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        resize: vertical;
-    }
+        .form-container h3 {
+            margin-bottom: 10px;
+        }
 
-   .form-container .button-group {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 10px;
-    }
+        .form-container textarea {
+            width: 100%;
+            height: 350px;
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            resize: vertical;
+        }
 
-    .form-container .button-group button {
-         margin-top:-25px;
-    }
+        .form-container .button-group {
+  display: flex;
+  justify-content: flex-end;
+  position: absolute;
+  bottom: 1px;
+  left: -19px;
+  width: calc(100% - 40px);
+}
 
-    .form-container .button-group .clear-button {
-        margin-left: auto;
-    }
-    .form-container .button-group button:last-child {
-        align-self: flex-end;
-         margin-left: 100px;
-         margin-top:-10px;
-    }
+        .form-container .button-group button {
+        margin-left: 10px;
+     }
 
-    .form-container button {
-        padding: 10px 20px;
-        background-color: #4CAF50;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
+        .form-container button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    /* Overlay styles */
-    .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999;
-        visibility: hidden;
-        opacity: 0;
-        transition: visibility 0s, opacity 0.3s;
-    }
+        /* Overlay styles */
 
-    .overlay.active {
-        visibility: visible;
-        opacity: 1;
-    }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+        }
 
-    .modal {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        max-width: 400px;
-        text-align: center;
-    }
+        .overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
 
-    .modal h3 {
-        margin-bottom: 10px;
-    }
+        .modal {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            text-align: center;
+        }
 
-    .modal p {
-        margin-bottom: 20px;
-    }
+        .modal h3 {
+            margin-bottom: 10px;
+        }
 
-    .modal button {
-        padding: 10px 20px;
-        background-color: #4CAF50;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-</style>
+        .modal p {
+            margin-bottom: 20px;
+        }
+
+        .modal button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+
+
 <body>
 <div class="form-container">
-    <h3>Patients</h3>
-    <textarea name="patients" placeholder="Enter patients data"></textarea>
+    <div>
+        <h3>Patients</h3>
+        <textarea name="patients" placeholder="Enter patients data"></textarea>
+    </div>
 
-    <h3>Doctors</h3>
-    <textarea name="doctors" placeholder="Enter doctors data"></textarea>
+    <div>
+        <h3>Doctors</h3>
+        <textarea name="doctors" placeholder="Enter doctors data"></textarea>
+    </div>
 
-    <h3>Appointments</h3>
-    <textarea name="appointments" placeholder="Enter appointments data"></textarea>
+    <div>
+        <h3>Appointments</h3>
+        <textarea name="appointments" placeholder="Enter appointments data"></textarea>
+    </div>
 
     <div class="button-group">
-        <button type="submit" onclick="submitForm()">Submit Data</button>
-        <form action="/cleardb" method="POST">
-          <button type="submit" onclick="clearDB(event)" class="clear-button">Clear</button>
-
-        </form>
+        <button type="submit" onclick="submitForm()">Send Data</button>
+            <button type="submit" onclick="clearDB(event)" class="clear-button">Clear DB</button>
     </div>
 </div>
 
@@ -212,6 +223,7 @@ app.get('/', (req, res) => {
                 console.error('Error submitting form:', error);
             });
     }
+
     function closeModal() {
         // Close the modal overlay and clear the form
         document.getElementById('overlay').classList.remove('active');
@@ -219,6 +231,7 @@ app.get('/', (req, res) => {
         document.querySelector('textarea[name="doctors"]').value = '';
         document.querySelector('textarea[name="appointments"]').value = '';
     }
+
     function clearDB() {
         // Send a request to the server to clear the database
         event.preventDefault();
@@ -241,18 +254,25 @@ app.get('/', (req, res) => {
                 console.error('Error clearing database:', error);
             });
     }
-    
-
 </script>
 </body>
 </html>
+
 
   `);
 });
 
 
 // Endpoint for submitting all data
+let isSubmitting = false;
 app.post('/data', async (req, res) => {
+
+    if (isSubmitting) {
+        // If a submission is already in progress, return a response indicating it
+        return res.send('A submission is already in progress. Please wait.');
+    }
+
+    isSubmitting = true;
     const patientsData = req.body.patients;
     const doctorsData = req.body.doctors;
     const appointmentsData = req.body.appointments;
@@ -418,34 +438,26 @@ app.post('/data', async (req, res) => {
 
 
     let message = '';
-    if (successfulPatients.length > 0) {
-        message += `<b>Successful Patients:</b><br>${successfulPatients.join('<br>')}`;
+
+    function addSection(title, items) {
+        if (Array.isArray(items) && items.filter(e => e).length > 0) {
+            message += `<b>${title}:</b><br>${items.join('<br>')}`;
+        }
     }
-    if (successfulDoctors.length > 0) {
-        message += `<b><br><br>Successful Doctors:</b><br>${successfulDoctors.join('<br>')}`;
-    }
-    if (duplicatePatients.length > 0) {
-        message += `<b><br><br>Duplicate Patients:</b><br>${duplicatePatients.join('<br>')}`;
-    }
-    if (duplicateDoctors.length > 0) {
-        message += `<b><br><br>Duplicate Doctors:</b><br>${duplicateDoctors.join('<br>')}`;
-    }
-    if (duplicateAppointments.length > 0) {
-        message += `<b><br><br>Duplicate Appointments:</b><br>${duplicateAppointments.join('<br>')}`;
-    }
-    if (Array.isArray(failedFormatPatients) && failedFormatPatients.filter(e => e).length > 0) {
-        message += `<b><br><br>Wrong format Patiens:</b><br>${failedFormatPatients.join('<br>')}`;
-    }
-    if (Array.isArray(failedFormatDoctors) && failedFormatDoctors.filter(e => e).length > 0) {
-        message += `<b><br><br>Wrong format Doctors:</b><br>${failedFormatDoctors.join('<br>')}`;
-    }
-    if (Array.isArray(failedFormatAppointments) && failedFormatAppointments.filter(e => e).length > 0) {
-        message += `<b><br><br>Wrong format Appointments:</b><br>${failedFormatAppointments.join('<br>')}`;
-    }
+
+    addSection('Successful Patients', successfulPatients);
+    addSection('<br><br>Successful Doctors', successfulDoctors);
+    addSection('<br><br>Duplicate Patients', duplicatePatients);
+    addSection('<br><br>Duplicate Doctors', duplicateDoctors);
+    addSection('<br><br>Duplicate Appointments', duplicateAppointments);
+    addSection('<br><br>Wrong format Patients', failedFormatPatients);
+    addSection('<br><br>Wrong format Doctors', failedFormatDoctors);
+    addSection('<br><br>Wrong format Appointments', failedFormatAppointments);
 
     if (message !== '') {
         message += '<br><br>';
     }
+
 
 
 
@@ -458,6 +470,7 @@ app.post('/data', async (req, res) => {
          </html> `);connectedClients.forEach((client) => {
         client.send('reload');
     });
+    isSubmitting = false;
 });
 
 
@@ -483,7 +496,32 @@ app.post('/cleardb', async (req, res) => {
     }
 });
 
-
+app.put('/api/appointments/update', async (req, res) => {
+    const { color, patientId, doctorId, appointmentTime } = req.body;
+    try {
+        const appointment = await Appointment.findOne({ patientId, doctorId, appointmentTime });
+        if (!appointment) {
+            return res.status(404).send('Appointment not found');
+        }
+        appointment.color = color;
+        await appointment.save();
+        res.status(200).send('Appointment updated');
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+app.get('/api/appointments/:patientId/:doctorId/:appointmentTime', async (req, res) => {
+    const { patientId, doctorId, appointmentTime } = req.params;
+    try {
+        const appointment = await Appointment.findOne({ patientId, doctorId, appointmentTime });
+        if (!appointment) {
+            return res.status(404).send('Appointment not found');
+        }
+        res.status(200).json(appointment);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
 // Start the server
 const server = app.listen(port, () => {
     console.log(`Server started at http://localhost:${port}`);
