@@ -4,28 +4,12 @@ const mongoose = require('mongoose');
 const tableRouter = require('./table');
 const app = express();
 const { Patient, Doctor, Appointment } = require('./model.js');
-const WebSocket = require('ws');
 const port = 10000;
+const {connectedClients,handleUpgrade } = require('./websocketServer');
 require('dotenv').config();
 
 
 
-// Create WebSocket server
-const wss = new WebSocket.Server({ noServer: true });
-
-// Store connected clients
-const connectedClients = new Set();
-
-wss.on('connection', (ws) => {
-    // Add client to connected clients set
-    connectedClients.add(ws);
-    console.log('A client has connected');
-    // Remove client from connected clients set on close event
-    ws.on('close', () => {
-        connectedClients.delete(ws);
-        console.log('A client has disconnected');
-    });
-});
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -65,6 +49,7 @@ app.get('/', (req, res) => {
             justify-content: center;
             background-color: #fff;
             padding: 40px;
+            width:877px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             position: relative;
@@ -215,23 +200,26 @@ app.get('/', (req, res) => {
                 // Display the modal overlay
                 document.getElementById('modalMessage').innerHTML = message;
                 document.getElementById('overlay').classList.add('active');
-                const connectedClients = new Set();
-                connectedClients.forEach((client) => {
-                    client.send('reload');
-                });
+           
+               
             })
             .catch(error => {
                 console.error('Error submitting form:', error);
             });
     }
 
-    function closeModal() {
-        // Close the modal overlay and clear the form
-        document.getElementById('overlay').classList.remove('active');
+   function closeModal() {
+    // Close the modal overlay
+    document.getElementById('overlay').classList.remove('active');
+
+    // Check if the overlay does not have the 'cleardb' class
+    if (!document.getElementById('overlay').classList.contains('cleardb')) {
+        // Clear the form fields
         document.querySelector('textarea[name="patients"]').value = '';
         document.querySelector('textarea[name="doctors"]').value = '';
         document.querySelector('textarea[name="appointments"]').value = '';
     }
+}
 
     function clearDB() {
         // Send a request to the server to clear the database
@@ -246,10 +234,9 @@ app.get('/', (req, res) => {
             .then(message => {
                 // Display the modal overlay
                 document.getElementById('modalMessage').innerHTML = message;
-                document.getElementById('overlay').classList.add('active');
-                connectedClients.forEach((client) => {
-                    client.send('reload');
-                });
+               document.getElementById('overlay').classList.add('active', 'cleardb');
+
+               
             })
             .catch(error => {
                 console.error('Error clearing database:', error);
@@ -290,29 +277,42 @@ app.post('/data', async (req, res) => {
 
     // Process patients
     const patientsArray = patientsData.split('\n').map((line) => line.trim());
+
     for (const patientLine of patientsArray) {
         const patientData = patientLine.split(',').map((item) => item.trim());
         const id = Number.parseInt(patientData[0]);
-        let hours,name,dob = undefined;
+        let hours, name, dob = undefined;
 
-
-        // Validate data format here
-        const hoursPattern = /^([7-9]|1[0-9]|2[0-4])(?:-([7-9]|1[0-9]|2[0-4]))?$/;
-        const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+        const hoursPattern = /^(?:[89]|1[0-9]|2[0-4])(?:-(?:[89]|1[0-9]|2[0-4]))$/;
+        const namePattern = /^([A-Za-z]+(\s[A-Za-z]+)?)$/;
         const dobPattern = /^\d{2}\.\d{2}\.\d{4}$/;
-        //check for name/dob
+
+        console.log(`Processing patient: ${patientLine}`);
+
         if (!(isNaN(id) || !hoursPattern.test(patientData[1]))) {
-            if (patientData.length > 2 && namePattern.test(patientData[2])) {
-                name = patientData[2];
+            if (patientData.length > 2) {
+                let splitName = patientData[2].split(' ');
+                if (splitName.length > 2 || (!namePattern.test(patientData[2]) && !dobPattern.test(patientData[2]))) {
+                    console.log(`Name or Date of Birth is in wrong format: ${patientData[2]}`);
+                    failedFormatPatients.push(patientLine);
+                    continue;
+                }
+                if (namePattern.test(patientData[2])) {
+                    name = patientData[2];
+                }
+                if (dobPattern.test(patientData[2])) {
+                    dob = patientData[2];
+                }
             }
-
-            if (patientData.length > 3 && dobPattern.test(patientData[3])) {
+            if (patientData.length > 3) {
+                if (!dobPattern.test(patientData[3])) {
+                    console.log(`Date of Birth is in wrong format: ${patientData[3]}`);
+                    failedFormatPatients.push(patientLine);
+                    continue;
+                }
                 dob = patientData[3];
-            } else if (patientData.length > 2 && dobPattern.test(patientData[2])) {
-                dob = patientData[2];
             }
 
-            // Extract hours from the patientData
             const hoursMatch = patientData[1].match(hoursPattern);
             if (hoursMatch) {
                 hours = hoursMatch[0];
@@ -328,20 +328,24 @@ app.post('/data', async (req, res) => {
             try {
                 const existingPatient = await Patient.findOne({ id });
                 if (existingPatient) {
+                    console.log(`Duplicate patient found with id: ${id}`);
                     duplicatePatients.push(patientLine);
                     continue;
                 }
 
+
+                console.log(`Saving patient with id: ${id}`);
                 await patient.save();
                 successfulPatients.push(patientLine);
             } catch (error) {
                 console.error('Error saving patient:', error);
             }
         } else {
+            console.log(`Patient with id: ${id} has wrong format`);
             failedFormatPatients.push(patientLine);
         }
-
     }
+
 
 
     // Process doctors
@@ -350,27 +354,37 @@ app.post('/data', async (req, res) => {
     for (const doctorLine of doctorsArray) {
         const doctorData = doctorLine.split(',').map((item) => item.trim());
         const id = Number.parseInt(doctorData[0]);
-        let hours,name,dob = undefined;
+        let hours, name, dob = undefined;
 
-
-        // Validate data format here
-        const hoursPattern = /^([7-9]|1[0-9]|2[0-4])(?:-([7-9]|1[0-9]|2[0-4]))?$/;
-        const namePattern = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+        const hoursPattern = /^(?:[89]|1[0-9]|2[0-4])(?:-(?:[89]|1[0-9]|2[0-4]))$/;
+        const namePattern = /^([A-Za-z]+(\s[A-Za-z]+)?)$/;
         const dobPattern = /^\d{2}\.\d{2}\.\d{4}$/;
-        //check for name/dob
+
+        console.log(`Processing doctor: ${doctorLine}`);
+
         if (!(isNaN(id) || !hoursPattern.test(doctorData[1]))) {
-            if (doctorData.length > 2 && namePattern.test(doctorData[2])) {
-                name = doctorData[2];
+            if (doctorData.length > 2) {
+                let splitName = doctorData[2].split(' ');
+                if (splitName.length > 2 || (!namePattern.test(doctorData[2]) && !dobPattern.test(doctorData[2]))) {
+                    console.log(`Name or Date of Birth is in wrong format: ${doctorData[2]}`);
+                    failedFormatDoctors.push(doctorLine);
+                    continue;
+                }
+                if (namePattern.test(doctorData[2])) {
+                    name = doctorData[2];
+                }
+                if (dobPattern.test(doctorData[2])) {
+                    dob = doctorData[2];
+                }
             }
-
-
-            if (doctorData.length > 3 && dobPattern.test(doctorData[3])) {
+            if (doctorData.length > 3) {
+                if (!dobPattern.test(doctorData[3])) {
+                    failedFormatDoctors.push(doctorLine);
+                    continue;
+                }
                 dob = doctorData[3];
-            } else if (doctorData.length > 2 && dobPattern.test(doctorData[2])) {
-                dob = doctorData[2];
             }
 
-            // Extract hours from the doctorData
             const hoursMatch = doctorData[1].match(hoursPattern);
             if (hoursMatch) {
                 hours = hoursMatch[0];
@@ -386,14 +400,17 @@ app.post('/data', async (req, res) => {
             try {
                 const existingDoctor = await Doctor.findOne({ id });
                 if (existingDoctor) {
+                    console.log(`Duplicate doctor found with id: ${id}`);
                     duplicateDoctors.push(doctorLine);
                     continue;
                 }
 
+
+                console.log(`Saving doctor with id: ${id}`);
                 await doctor.save();
                 successfulDoctors.push(doctorLine);
             } catch (error) {
-                console.error('Error saving patient:', error);
+                console.error('Error saving doctor:', error);
             }
         } else {
             failedFormatDoctors.push(doctorLine);
@@ -405,12 +422,19 @@ app.post('/data', async (req, res) => {
 
     for (const appointmentLine of appointmentsArray) {
         const appointmentData = appointmentLine.split(',').map((item) => item.trim());
+
+        // Validate data format here
+        if (appointmentData.length !== 3) {
+            failedFormatAppointments.push(appointmentLine);
+            continue;
+        }
+
         const patientId = Number.parseInt(appointmentData[0]);
         const doctorId = Number.parseInt(appointmentData[1]);
         const appointmentTime = Number.parseInt(appointmentData[2]);
 
         try {
-            // Validate data format here
+
             if (isNaN(patientId) || isNaN(doctorId)) {
                 failedFormatAppointments.push(appointmentLine);
                 continue;
@@ -448,12 +472,12 @@ app.post('/data', async (req, res) => {
 
     addSection('Successful Patients', successfulPatients);
     addSection('<br><br>Successful Doctors', successfulDoctors);
-    addSection('<br><br>Duplicate Patients', duplicatePatients);
-    addSection('<br><br>Duplicate Doctors', duplicateDoctors);
-    addSection('<br><br>Duplicate Appointments', duplicateAppointments);
     addSection('<br><br>Wrong format Patients', failedFormatPatients);
     addSection('<br><br>Wrong format Doctors', failedFormatDoctors);
     addSection('<br><br>Wrong format Appointments', failedFormatAppointments);
+    addSection('<br><br>Duplicate Patients', duplicatePatients);
+    addSection('<br><br>Duplicate Doctors', duplicateDoctors);
+    addSection('<br><br>Duplicate Appointments', duplicateAppointments);
 
     if (message !== '') {
         message += '<br><br>';
@@ -528,11 +552,9 @@ const server = app.listen(port, () => {
     console.log(`Server started at http://localhost:${port}`);
 });
 server.on('upgrade', handleUpgrade);
-function handleUpgrade(request, socket, head) {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-    });
-}
+
+
+
 
 
 

@@ -267,6 +267,7 @@ async function viewCard(patientId, doctorId, appointmentTime) {
     }
 });
 const mongoose = require('mongoose');
+const {connectedClients} = require("./websocketServer");
 const ObjectId = mongoose.Types.ObjectId;
 
 router.post('/saveData', async (req, res) => {
@@ -298,7 +299,9 @@ router.post('/saveData', async (req, res) => {
                 console.log('Appointment not found for ID:', idObj);
             }
         }
-
+        connectedClients.forEach((client) => {
+            client.send('reload');
+        });
         console.log('Data saved successfully');
 
         res.json({ success: true });
