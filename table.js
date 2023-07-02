@@ -1,7 +1,7 @@
 const express = require('express');
 const { Patient, Doctor, Appointment } = require('./model.js');
 const router = express.Router();
-
+const {connectedClients} = require('./websocketServer');
 
 
 router.get('/table', async (req, res) => {
@@ -108,6 +108,15 @@ table th {
   outline: 1px solid black;
   padding: 10px
 }
+ .close-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #fff;
+  border: 1px solid #000;
+  padding: 5px 10px;
+  cursor: pointer;
+}   
 
 
 </style>
@@ -159,6 +168,7 @@ async function saveData() {
                 const patientId = row.cells[0].textContent;
                 const doctorId = row.cells[1].textContent;
                 const appointmentTime = row.cells[2].textContent;
+console.log('row.style.backgroundColor:', row.style.backgroundColor);
 
                 idsToBeUpdated.push({ patientId, doctorId, appointmentTime });
                 if (!newAppointmentTime) {
@@ -225,10 +235,25 @@ async function viewCard(patientId, doctorId, appointmentTime) {
             content += '<p><strong>Appointment Time:</strong> ' + appointmentTime + '</p>';
         
         // Create the appointment card element
-        const appointmentCard = document.createElement('div');
-        appointmentCard.classList.add('appointment-card');
-        appointmentCard.innerHTML = content;
+       const appointmentCard = document.createElement('div');
+       appointmentCard.classList.add('appointment-card');
 
+        const appointmentContent = document.createElement('div');
+        appointmentContent.classList.add('appointment-content');
+        appointmentContent.innerHTML = content;
+
+        const closeButton = document.createElement('button');
+        closeButton.classList.add('close-button');
+        closeButton.textContent = 'Close';
+
+       // Add event listener to the close button
+       closeButton.addEventListener('click', () => {
+       // Remove the appointment card from the DOM
+       appointmentCard.remove();
+});
+
+appointmentCard.appendChild(appointmentContent);
+appointmentCard.appendChild(closeButton);
         // Remove the current appointment card if it exists
         if (currentAppointmentCard) {
           currentAppointmentCard.remove();
@@ -251,7 +276,12 @@ async function viewCard(patientId, doctorId, appointmentTime) {
   }
 }
 
+  function closeButton() {
+  
+    document.getElementById('closeButton').classList.remove('active');
 
+  
+}
 
 
 
@@ -266,9 +296,6 @@ async function viewCard(patientId, doctorId, appointmentTime) {
         res.send('Failed to retrieve data');
     }
 });
-const mongoose = require('mongoose');
-const {connectedClients} = require("./websocketServer");
-const ObjectId = mongoose.Types.ObjectId;
 
 router.post('/saveData', async (req, res) => {
     try {
@@ -310,12 +337,6 @@ router.post('/saveData', async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
-
-
-
-
-
-
 
 
 

@@ -424,7 +424,7 @@ app.post('/data', async (req, res) => {
         const appointmentData = appointmentLine.split(',').map((item) => item.trim());
 
         // Validate data format here
-        if (appointmentData.length !== 3) {
+        if (appointmentData.length !== 2 && appointmentData.length !== 3){
             failedFormatAppointments.push(appointmentLine);
             continue;
         }
