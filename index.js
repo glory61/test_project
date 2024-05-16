@@ -8,14 +8,18 @@ bot.command('screenshot', async (ctx) => {
     const url = 'https://eva.ua/ua/promotion/retail/';
 
     // Start antibotbrowser
-    const antibrowser = await antibotbrowser.startbrowser();
+    const antibrowser = await antibotbrowser.startbrowser({ args: ['--no-sandbox'] });
 
     // Connect to Puppeteer with antibotbrowser
-    const browser = await puppeteer.connect({ browserWSEndpoint: antibrowser.websokcet,headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']  });
+    const browser = await puppeteer.connect({
+        browserWSEndpoint: antibrowser.websokcet,
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
+    });
 
     try {
         const page = await browser.newPage();
-        await page.setViewport({ width: 1920, height: 1080 }); // Adjust viewport size as needed
+        await page.setViewport({ width: 1920, height: 1080 });
 
         // Navigate to the website
         await page.goto(url);
