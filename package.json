@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "npm install -g npm@latest",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "heroku-postbuild": "mkdir ./.cache && mv /app/.cache/puppeteer ./.cache"
