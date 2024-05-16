@@ -11,7 +11,7 @@ bot.command('screenshot', async (ctx) => {
     const antibrowser = await antibotbrowser.startbrowser();
 
     // Connect to Puppeteer with antibotbrowser
-    const browser = await puppeteer.connect({ browserWSEndpoint: antibrowser.websokcet });
+    const browser = await puppeteer.connect({ browserWSEndpoint: antibrowser.websokcet,headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']  });
 
     try {
         const page = await browser.newPage();
